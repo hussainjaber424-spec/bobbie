@@ -1,0 +1,1037 @@
+<title>Loan Command Center</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: fixed left rail of sections, working canvas on the right; rail becomes a scrolling tab strip on phones. */
+:root {
+  --bg: #f5f6f4; --surface: #ffffff; --sunken: #eceeea; --line: #d9ddd6; --fg: #1d2420; --muted: #5e6862;
+  --accent: #1f6f5c; --accent-ink: #ffffff; --accent-soft: #dcefe8;
+  --ok: #217a45; --ok-soft: #dff2e5; --warn: #9a5b00; --warn-soft: #fbecd2; --bad: #b42318; --bad-soft: #fde4e1;
+  --info: #2a5db0; --info-soft: #e1eafb; --violet: #6b46a8; --violet-soft: #ece4f8; --gray-soft: #e7e9e6;
+  --f-display: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --f-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  --r: 6px;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #121614; --surface: #1a1f1c; --sunken: #232a26; --line: #323b36; --fg: #e6ebe7; --muted: #9aa69f;
+  --accent: #56b89c; --accent-ink: #0d1411; --accent-soft: #1f3a32;
+  --ok: #6fcf8f; --ok-soft: #1d3426; --warn: #f0b45a; --warn-soft: #3a2c15; --bad: #ff8a7a; --bad-soft: #3d1f1b;
+  --info: #8db4f5; --info-soft: #1d2a40; --violet: #b99be8; --violet-soft: #2c2340; --gray-soft: #2a302d; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #121614; --surface: #1a1f1c; --sunken: #232a26; --line: #323b36; --fg: #e6ebe7; --muted: #9aa69f;
+  --accent: #56b89c; --accent-ink: #0d1411; --accent-soft: #1f3a32;
+  --ok: #6fcf8f; --ok-soft: #1d3426; --warn: #f0b45a; --warn-soft: #3a2c15; --bad: #ff8a7a; --bad-soft: #3d1f1b;
+  --info: #8db4f5; --info-soft: #1d2a40; --violet: #b99be8; --violet-soft: #2c2340; --gray-soft: #2a302d; color-scheme: dark }
+html, body { height: 100%; }
+body { background: var(--bg); color: var(--fg); font: 14px/1.5 var(--f-body); }
+* { box-sizing: border-box; }
+h1, h2, h3 { font-family: var(--f-display); text-wrap: balance; margin: 0; letter-spacing: -0.01em; }
+h1 { font-size: 1.5rem; } h2 { font-size: 1.1rem; } h3 { font-size: 0.95rem; }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.num, td.num, .mono { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+.app { display: grid; grid-template-columns: 220px minmax(0, 1fr); min-height: 100%; }
+.rail { background: var(--surface); border-right: 1px solid var(--line); padding-block: 20px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: 16px; display: flex; flex-direction: column; gap: 20px; position: sticky; top: 0; height: 100vh; }
+.brand { font-family: var(--f-display); font-weight: 700; font-size: 1.05rem; line-height: 1.2; }
+.brand small { display: block; font: 500 0.72rem var(--f-body); color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase; margin-top: 4px; }
+nav.sections { display: flex; flex-direction: column; gap: 2px; }
+nav.sections a { display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; border-radius: var(--r); color: var(--fg); text-decoration: none; font-weight: 500; }
+nav.sections a:hover { background: var(--sunken); }
+nav.sections a[aria-current="page"] { background: var(--accent-soft); color: var(--accent); }
+nav.sections .count { font: 500 0.75rem var(--f-mono); background: var(--bad); color: var(--surface); border-radius: 10px; padding: 0 7px; }
+.who { margin-top: auto; font-size: 0.8rem; color: var(--muted); display: flex; gap: 8px; align-items: center; }
+.who img { width: 26px; height: 26px; border-radius: 50%; }
+main { min-width: 0; padding-block: 24px 48px; padding-left: 28px; padding-right: max(28px, env(safe-area-inset-right, 0px)); display: flex; flex-direction: column; gap: 20px; }
+.head { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
+.head p { margin: 4px 0 0; color: var(--muted); }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 16px; min-width: 0; }
+.panel > h2 { margin-bottom: 12px; }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+.tile { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 12px 14px; }
+.tile .label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.tile .value { font: 600 1.6rem var(--f-mono); font-variant-numeric: tabular-nums; }
+.tile.alert { border-color: var(--bad); background: var(--bad-soft); }
+.tile.alert .value { color: var(--bad); }
+.scroll { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; }
+th { text-align: left; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); font-weight: 600; padding: 6px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+td { padding: 9px 10px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+tr.click { cursor: pointer; } tr.click:hover td { background: var(--sunken); }
+tr.overdue td:first-child { box-shadow: inset 3px 0 0 var(--bad); }
+.pill { display: inline-block; padding: 1px 9px; border-radius: 999px; font-size: 0.78rem; font-weight: 500; white-space: nowrap; }
+.t-slate { background: var(--gray-soft); color: var(--fg); } .t-blue { background: var(--info-soft); color: var(--info); }
+.t-amber { background: var(--warn-soft); color: var(--warn); } .t-green { background: var(--ok-soft); color: var(--ok); }
+.t-red { background: var(--bad-soft); color: var(--bad); } .t-purple { background: var(--violet-soft); color: var(--violet); }
+.t-teal { background: var(--accent-soft); color: var(--accent); }
+.bar { height: 6px; background: var(--sunken); border-radius: 3px; overflow: hidden; min-width: 70px; }
+.bar > i { display: block; height: 100%; background: var(--accent); }
+.btn { border: 1px solid var(--line); background: var(--surface); padding: 6px 12px; border-radius: var(--r); cursor: pointer; font-weight: 500; }
+.btn:hover { background: var(--sunken); }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn.primary:hover { filter: brightness(1.08); }
+.btn.small { padding: 2px 8px; font-size: 0.8rem; }
+.btn.danger { color: var(--bad); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.filters { display: flex; flex-wrap: wrap; gap: 8px; align-items: end; }
+.field { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.field label { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+input, select, textarea { border: 1px solid var(--line); background: var(--surface); border-radius: var(--r); padding: 6px 8px; max-width: 100%; }
+textarea { width: 100%; min-height: 60px; resize: vertical; }
+.form { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; }
+.form .wide { grid-column: 1 / -1; }
+.actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.muted { color: var(--muted); }
+.empty { padding: 24px; text-align: center; color: var(--muted); border: 1px dashed var(--line); border-radius: var(--r); }
+.banner { padding: 10px 14px; border-radius: var(--r); background: var(--bad-soft); color: var(--bad); font-weight: 500; }
+.banner.info { background: var(--info-soft); color: var(--info); }
+.banner.warn { background: var(--warn-soft); color: var(--warn); }
+.steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; }
+.step { border: 1px solid var(--line); border-radius: var(--r); padding: 8px 10px; display: flex; flex-direction: column; gap: 4px; background: var(--surface); }
+.step.done { border-color: var(--ok); background: var(--ok-soft); }
+.step .name { font-weight: 600; font-size: 0.85rem; }
+.step .date { font: 0.75rem var(--f-mono); color: var(--muted); }
+.list { display: flex; flex-direction: column; }
+.list > div { display: flex; gap: 10px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+.list > div > .grow { flex: 1; min-width: 160px; }
+.done-text { text-decoration: line-through; color: var(--muted); }
+.timeline { display: flex; flex-direction: column; gap: 8px; max-height: 420px; overflow: auto; }
+.timeline div { font-size: 0.85rem; display: grid; grid-template-columns: 130px 1fr; gap: 10px; }
+.timeline time { font: 0.75rem var(--f-mono); color: var(--muted); }
+.item-type { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }
+#toast { position: fixed; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); background: var(--fg); color: var(--bg); padding: 10px 14px; border-radius: var(--r); max-width: 360px; z-index: 20; }
+.back { background: none; border: 0; color: var(--accent); cursor: pointer; padding: 0; font-weight: 500; }
+.swatch { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: -1px; margin-right: 6px; border: 1px solid var(--line); }
+.hbar { display: grid; grid-template-columns: 90px 1fr 40px; gap: 8px; align-items: center; font-size: 0.85rem; }
+.hbar .track { height: 14px; background: var(--sunken); border-radius: 3px; overflow: hidden; }
+.hbar .track i { display: block; height: 100%; background: var(--accent); }
+.hbar .track i.alt { background: var(--info); }
+@media (max-width: 760px) {
+  .app { grid-template-columns: minmax(0, 1fr); }
+  .rail { position: static; height: auto; flex-direction: column; gap: 10px; border-right: 0; border-bottom: 1px solid var(--line); padding-block: 12px; padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  nav.sections { flex-direction: row; overflow-x: auto; min-width: 0; }
+  nav.sections a { white-space: nowrap; gap: 6px; }
+  .who { margin-top: 0; }
+  main { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  .timeline div { grid-template-columns: 1fr; gap: 0; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="app">
+  <aside class="rail">
+    <div class="brand">Loan Command Center<small id="roleLabel">Connecting…</small></div>
+    <nav class="sections" id="nav" aria-label="Sections"></nav>
+    <div class="who" id="who"></div>
+  </aside>
+  <main id="main">
+    <div class="empty">Loading your pipeline…</div>
+  </main>
+</div>
+<div id="toast" hidden></div>
+
+<script>
+"use strict";
+// ---------------------------------------------------------------------------
+// Stage module (mirrors src/lib/stages.ts in the Supabase build)
+// ---------------------------------------------------------------------------
+const PIPELINE = [
+  ["application", "Application", "slate"], ["submitted", "Submitted", "blue"], ["esigned", "E-signed", "blue"],
+  ["documents_received", "Documents received", "blue"], ["rate_locked", "Rate locked", "blue"],
+  ["underwriting", "Underwriting", "amber"], ["approved", "Approved", "teal"], ["clear_to_close", "Clear to close", "green"],
+  ["closing", "Closing", "green"], ["funded", "Funded", "green"],
+].map(([key, label, tone]) => ({ key, label, tone }));
+const EXCEPTIONS = [["on_hold", "On hold", "amber"], ["restructured", "Restructured", "purple"], ["denied", "Denied", "red"], ["cancelled", "Cancelled", "slate"]]
+  .map(([key, label, tone]) => ({ key, label, tone }));
+const STAGES = [...PIPELINE, ...EXCEPTIONS];
+const FINISHED = new Set(["funded", "cancelled", "denied"]);
+const MILESTONES = [
+  ["submission", "Submission", "submitted"], ["esign", "E-signing", "esigned"], ["documents", "Documents received", "documents_received"],
+  ["rate_lock", "Rate lock", "rate_locked"], ["underwriting", "Underwriting", "underwriting"], ["approval", "Approval", "approved"],
+  ["clear_to_close", "Clear to close", "clear_to_close"], ["closing", "Closing", "closing"], ["funding", "Funding", "funded"],
+].map(([key, label, stage]) => ({ key, label, stage }));
+const PROCESSORS = ["Bobbie", "Adel", "Katie", "Moe"];
+const COLOR_TO_PROCESSOR = { purple: "Bobbie", green: "Adel", orange: "Katie", yellow: "Moe" };
+const stageInfo = (k) => STAGES.find((s) => s.key === k) || { key: k, label: k, tone: "slate" };
+const pos = (k) => PIPELINE.findIndex((s) => s.key === k);
+const isFinished = (k) => FINISHED.has(k);
+const msInfo = (k) => MILESTONES.find((m) => m.key === k);
+
+function stageAfterMilestone(cur, mKey) {
+  if (pos(cur) < 0) return cur; // on hold / restructured keep their stage
+  const target = msInfo(mKey).stage;
+  return pos(target) > pos(cur) ? target : cur;
+}
+function progress(loan) {
+  const done = MILESTONES.filter((m) => loan.milestones?.[m.key]).length;
+  const reqs = loan.requirements || [];
+  const reqDone = reqs.filter((r) => r.status !== "outstanding").length;
+  const total = MILESTONES.length + reqs.length;
+  return Math.round(((done + reqDone) / total) * 100);
+}
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+function h(tag, attrs, ...kids) {
+  const el = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (v == null || v === false) continue;
+    if (k.startsWith("on")) el.addEventListener(k.slice(2), v);
+    else if (k === "class") el.className = v;
+    else if (k === "style") el.style.cssText = v;
+    else if (k === "value") el.value = v;
+    else el.setAttribute(k, v === true ? "" : v);
+  }
+  for (const kid of kids.flat(Infinity)) if (kid != null && kid !== false) el.append(kid instanceof Node ? kid : String(kid));
+  return el;
+}
+const today = () => { const d = new Date(); return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10); };
+const addDays = (iso, n) => { const d = new Date(iso + "T12:00:00"); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10); };
+const nowIso = () => new Date().toISOString();
+const fmtDate = (iso) => iso ? new Date(iso.length === 10 ? iso + "T12:00:00" : iso).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }) : "—";
+const fmtDT = (iso) => iso ? new Date(iso).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : "";
+const money = (n) => (Number(n) || 0).toLocaleString(undefined, { style: "currency", currency: "USD" });
+const uid = () => (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2) + Date.now().toString(36)).replace(/[^a-zA-Z0-9-]/g, "");
+const pill = (stage) => { const s = stageInfo(stage); return h("span", { class: "pill t-" + s.tone }, s.label); };
+const bar = (pct) => h("div", { class: "bar", title: pct + "% complete" }, h("i", { style: `width:${pct}%` }));
+function toast(msg) { const t = document.getElementById("toast"); t.textContent = msg; t.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => (t.hidden = true), 3500); }
+const val = (id) => document.getElementById(id)?.value.trim() ?? "";
+const monthKey = (iso) => iso ? iso.slice(0, 7) : null;
+const daysBetween = (a, b) => (new Date(b) - new Date(a)) / 86400000;
+
+// ---------------------------------------------------------------------------
+// State + data access
+// ---------------------------------------------------------------------------
+const S = {
+  ready: false, offline: false, db: null, user: null, me: null, mgmt: false,
+  myRoster: null, roster: {}, mapping: {}, // mapping: processor name -> viewer id
+  loans: new Map(), contacts: [], invoices: [], payroll: [],
+  route: "overview", openLoan: null, filters: {}, importPreview: null, names: {},
+};
+const deskSubs = new Map();
+
+function loanKey(desk, id) { return desk + "|" + id; }
+function loanRef(l) { return l.desk === "pool" ? S.db.doc("pool/" + l.id) : S.db.doc(`desk/${l.desk}/loans/${l.id}`); }
+function deskName(desk) {
+  if (desk === "pool") return "Unassigned";
+  if (S.mgmt) return Object.entries(S.mapping).find(([, v]) => v === desk)?.[0] || "Unconfirmed account";
+  return S.myRoster?.name || "Me";
+}
+function strip(l) { const { desk, id, key, ...rest } = l; return rest; }
+
+const queues = new Map();
+function write(ref, body) {
+  const p = (queues.get(ref.path) || Promise.resolve()).then(() => ref.set(body)).catch((e) => {
+    toast(e?.code === "quota_exceeded" ? "Storage is full. Archive or delete old records, then try again." :
+          e?.code === "invalid_argument" ? "You don't have permission to change this record." : "Couldn't save. Check your connection and try again.");
+    throw e;
+  });
+  queues.set(ref.path, p.catch(() => {}));
+  return p;
+}
+
+function mutate(loan, fn) {
+  const body = structuredClone(strip(loan));
+  body.events = body.events || [];
+  const ev = (type, from, to, extra) => body.events.push({ type, from: from ?? null, to: to ?? null, by: S.me.id, at: nowIso(), ...(extra || {}) });
+  fn(body, ev);
+  if (body.events.length > 600) body.events = body.events.slice(-600);
+  body.updatedAt = nowIso();
+  return write(loanRef(loan), body);
+}
+
+function setStage(body, ev, next, opts = {}) {
+  if (next === body.stage) return;
+  ev("stage_changed", body.stage, next);
+  body.stage = next;
+  body.stageChangedAt = nowIso();
+  // A stage set directly still records that milestone's date (not on import).
+  const m = MILESTONES.find((x) => x.stage === next);
+  if (m && !opts.noStamp && !body.milestones?.[m.key]) {
+    body.milestones = body.milestones || {};
+    body.milestones[m.key] = { at: nowIso(), by: S.me.id };
+    ev("milestone_completed", null, m.key, { auto: true });
+  }
+}
+
+function completeMilestone(loan, mKey) {
+  if (isFinished(loan.stage)) return toast(`This loan is ${stageInfo(loan.stage).label.toLowerCase()}. Milestones are locked.`);
+  if (loan.milestones?.[mKey]) return;
+  return mutate(loan, (b, ev) => {
+    b.milestones = b.milestones || {};
+    b.milestones[mKey] = { at: nowIso(), by: S.me.id };
+    ev("milestone_completed", null, mKey);
+    const next = stageAfterMilestone(b.stage, mKey);
+    if (next !== b.stage) { ev("stage_changed", b.stage, next); b.stage = next; b.stageChangedAt = nowIso(); }
+  });
+}
+function reopenMilestone(loan, mKey) {
+  if (isFinished(loan.stage)) return toast("Move the loan out of its finished stage before reopening milestones.");
+  return mutate(loan, (b, ev) => {
+    const was = b.milestones?.[mKey]; if (!was) return;
+    delete b.milestones[mKey];
+    ev("milestone_reopened", mKey, null, { wasCompletedAt: was.at });
+    if (b.stage === msInfo(mKey).stage) {
+      const remaining = MILESTONES.filter((m) => b.milestones[m.key]).map((m) => m.stage);
+      const fallback = remaining.sort((a, c) => pos(c) - pos(a))[0] || "application";
+      ev("stage_changed", b.stage, fallback); b.stage = fallback; b.stageChangedAt = nowIso();
+    }
+  });
+}
+
+async function reassign(loan, newDesk) {
+  if (newDesk === loan.desk) return;
+  const body = structuredClone(strip(loan));
+  body.events = [...(body.events || []), { type: "reassigned", from: deskName(loan.desk), to: deskName(newDesk), by: S.me.id, at: nowIso() }];
+  body.updatedAt = nowIso();
+  const target = newDesk === "pool" ? S.db.doc("pool/" + loan.id) : S.db.doc(`desk/${newDesk}/loans/${loan.id}`);
+  await write(target, body);
+  await loanRef(loan).delete();
+  S.openLoan = loanKey(newDesk, loan.id);
+  toast("Loan reassigned to " + deskName(newDesk));
+}
+
+function subscribeDesk(desk) {
+  if (deskSubs.has(desk)) return;
+  const col = desk === "pool" ? S.db.collection("pool") : S.db.collection(`desk/${desk}/loans`);
+  const unsub = col.onSnapshot((snap) => {
+    for (const k of [...S.loans.keys()]) if (k.startsWith(desk + "|")) S.loans.delete(k);
+    for (const d of snap.docs) S.loans.set(loanKey(desk, d.id), { ...d.data(), desk, id: d.id, key: loanKey(desk, d.id) });
+    render();
+  }, (e) => console.warn("desk", desk, e));
+  deskSubs.set(desk, unsub);
+}
+function syncDeskSubs() {
+  const wanted = new Set(["pool", ...Object.values(S.mapping).filter(Boolean)]);
+  for (const [desk, unsub] of deskSubs) if (!wanted.has(desk)) { unsub(); deskSubs.delete(desk); for (const k of [...S.loans.keys()]) if (k.startsWith(desk + "|")) S.loans.delete(k); }
+  for (const d of wanted) subscribeDesk(d);
+}
+
+async function resolveNames(ids) {
+  if (!S.user) return;
+  const need = [...new Set(ids.filter((i) => i && !(i in S.names)))];
+  if (!need.length) return;
+  const ps = await S.user.profiles(need);
+  let changed = false;
+  for (const id of need) { S.names[id] = ps[id]?.name || ""; changed = true; }
+  if (changed) render();
+}
+const personName = (id) => (id && id === S.me?.id ? "You" : S.names[id]) || "Team member";
+
+// ---------------------------------------------------------------------------
+// Boot
+// ---------------------------------------------------------------------------
+(async function boot() {
+  if (!window.claude?.use) { S.offline = true; render(); return; }
+  const [db, user] = await Promise.all([claude.use("db"), claude.use("user")]);
+  S.db = db; S.user = user;
+  S.me = user ? await user.me() : null;
+  if (!db || !S.me?.id) { S.offline = true; render(); return; }
+  S.mgmt = !!S.me.canEdit;
+
+  db.collection("contacts").onSnapshot((s) => { S.contacts = s.docs.map((d) => ({ id: d.id, ...d.data() })); render(); }, () => {});
+  if (S.mgmt) {
+    db.doc("settings/processors").onSnapshot((d) => { S.mapping = d.exists ? { ...(d.data().mapping || {}) } : {}; syncDeskSubs(); render(); }, () => {});
+    db.collection("roster").onSnapshot((s) => { S.roster = Object.fromEntries(s.docs.map((d) => [d.id, d.data()])); resolveNames(Object.keys(S.roster)); render(); }, () => {});
+    db.collection("invoices").onSnapshot((s) => { S.invoices = s.docs.map((d) => ({ id: d.id, ...d.data() })); render(); }, () => {});
+    db.collection("payroll").onSnapshot((s) => { S.payroll = s.docs.map((d) => ({ id: d.id, ...d.data() })); render(); }, () => {});
+    syncDeskSubs();
+  } else {
+    db.doc("roster/" + S.me.id).onSnapshot((d) => { S.myRoster = d.exists ? d.data() : null; render(); }, () => {});
+    subscribeDesk(S.me.id);
+  }
+  S.ready = true;
+  route();
+})();
+
+window.addEventListener("hashchange", route);
+function route() {
+  const r = (location.hash || "#overview").slice(1);
+  const allowed = ["overview", "loans", "tasks", "contacts", ...(S.mgmt ? ["finance", "reports", "team", "import"] : [])];
+  S.route = allowed.includes(r) ? r : "overview";
+  S.openLoan = null;
+  render();
+}
+
+// ---------------------------------------------------------------------------
+// Derived data
+// ---------------------------------------------------------------------------
+function allLoans() { return [...S.loans.values()].sort((a, b) => (a.closingDate || "9999").localeCompare(b.closingDate || "9999")); }
+function workItems() {
+  const t = today(), items = [];
+  for (const l of S.loans.values()) {
+    if (isFinished(l.stage)) continue;
+    const base = { loan: l };
+    for (const task of l.tasks || []) {
+      if (task.doneAt) continue;
+      if (task.due && task.due < t) items.push({ ...base, type: "Overdue task", sev: 1, title: task.title, due: task.due });
+      else if (task.kind === "borrower_follow_up") items.push({ ...base, type: "Borrower follow-up", sev: 2, title: task.title, due: task.due });
+      else if (task.due && task.due <= addDays(t, 2)) items.push({ ...base, type: "Task due soon", sev: 2, title: task.title, due: task.due });
+    }
+    for (const r of l.requirements || []) if (r.status === "outstanding")
+      items.push({ ...base, type: r.kind === "condition" ? "Outstanding condition" : "Missing document", sev: r.due && r.due < t ? 1 : 2, title: r.title, due: r.due });
+    if (l.closingDate && l.closingDate >= t && l.closingDate <= addDays(t, 7)) items.push({ ...base, type: "Upcoming closing", sev: 2, title: "Closing " + fmtDate(l.closingDate), due: l.closingDate });
+    if (l.closingDate && l.closingDate < t && pos(l.stage) < pos("closing")) items.push({ ...base, type: "Closing date passed", sev: 1, title: "Closing was " + fmtDate(l.closingDate), due: l.closingDate });
+    if (l.rateLockExpires && l.rateLockExpires <= addDays(t, 5)) items.push({ ...base, type: "Rate lock expiring", sev: l.rateLockExpires < t ? 1 : 2, title: "Lock expires " + fmtDate(l.rateLockExpires), due: l.rateLockExpires });
+  }
+  return items.sort((a, b) => a.sev - b.sev || (a.due || "9999").localeCompare(b.due || "9999"));
+}
+
+// ---------------------------------------------------------------------------
+// Render
+// ---------------------------------------------------------------------------
+function render() {
+  const nav = document.getElementById("nav"), main = document.getElementById("main");
+  const overdue = S.ready ? workItems().filter((i) => i.sev === 1).length : 0;
+  const links = [["overview", "Overview"], ["loans", "Loans"], ["tasks", "Daily tasks", overdue], ["contacts", "Contacts"]];
+  if (S.mgmt) links.push(["finance", "Finance"], ["reports", "Reports"], ["team", "Team"], ["import", "Import"]);
+  nav.replaceChildren(...links.map(([k, label, count]) => h("a", { href: "#" + k, "aria-current": S.route === k && !S.openLoan ? "page" : null }, label, count ? h("span", { class: "count" }, count) : null)));
+  document.getElementById("roleLabel").textContent = S.offline ? "Not connected" : !S.ready ? "Connecting…" : S.mgmt ? "Management" : (S.myRoster?.name ? S.myRoster.name + " · Processor" : "Processor");
+  const who = document.getElementById("who");
+  who.replaceChildren(...(S.me ? [h("img", { src: S.me.avatarUrl, alt: "" }), h("span", null, S.me.name || "Signed in")] : []));
+
+  if (S.offline) { main.replaceChildren(offlineView()); return; }
+  if (!S.ready) return;
+  if (!S.mgmt && !S.myRoster) { main.replaceChildren(claimView()); return; }
+  const view = S.openLoan ? loanView : { overview: overviewView, loans: loansView, tasks: tasksView, contacts: contactsView, finance: financeView, reports: reportsView, team: teamView, import: importView }[S.route];
+  const active = document.activeElement?.id, selStart = document.activeElement?.selectionStart;
+  main.replaceChildren(...[view()].flat());
+  if (active) { const el = document.getElementById(active); if (el) { el.focus(); try { if (selStart != null) el.setSelectionRange(selStart, selStart); } catch {} } }
+}
+
+function offlineView() {
+  return h("div", { class: "panel" }, h("h2", null, "Sign in to use the command center"),
+    h("p", { class: "muted" }, "Open this page on claude.ai while signed in. Loan records are stored with the page and are only shown to people it has been shared with."));
+}
+
+function claimView() {
+  return h("div", { class: "panel", style: "max-width:520px" },
+    h("h2", null, "Which processor are you?"),
+    h("p", { class: "muted" }, "Management will confirm your choice before your loans show up in the company pipeline. Your loans are only visible to you and management."),
+    h("div", { class: "actions" }, PROCESSORS.map((n) => h("button", { class: "btn", onclick: async () => {
+      try { await S.db.doc("roster/" + S.me.id).set({ name: n, requestedAt: nowIso() }); await S.db.doc("desk/" + S.me.id).set({ name: n }); }
+      catch { toast("You need Contributor access to this page. Ask management to share it with you as a Contributor."); }
+    } }, n))));
+}
+
+function pageHead(title, sub, ...right) {
+  return h("div", { class: "head" }, h("div", null, h("h1", null, title), sub ? h("p", null, sub) : null), h("div", { class: "actions" }, right));
+}
+
+// ---- Overview --------------------------------------------------------------
+function overviewView() {
+  const loans = allLoans(), open = loans.filter((l) => !isFinished(l.stage)), t = today(), m = monthKey(t);
+  const items = workItems(), overdue = items.filter((i) => i.sev === 1);
+  const ctcMonth = loans.filter((l) => monthKey(l.milestones?.clear_to_close?.at) === m).length;
+  const fundedMonth = loans.filter((l) => monthKey(l.milestones?.funding?.at) === m).length;
+  const closingWeek = open.filter((l) => l.closingDate && l.closingDate >= t && l.closingDate <= addDays(t, 7)).length;
+  const out = [pageHead(S.mgmt ? "Company pipeline" : "My pipeline", new Date().toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" }),
+    h("button", { class: "btn primary", onclick: () => newLoanDialog() }, "New loan"))];
+  if (overdue.length) out.push(h("a", { href: "#tasks", class: "banner", style: "text-decoration:none" }, `${overdue.length} overdue item${overdue.length > 1 ? "s" : ""} need attention. Open daily tasks →`));
+  if (S.mgmt) {
+    const unconfirmed = Object.entries(S.roster).filter(([id]) => !Object.values(S.mapping).includes(id));
+    if (unconfirmed.length) out.push(h("a", { href: "#team", class: "banner info", style: "text-decoration:none" }, `${unconfirmed.length} processor account${unconfirmed.length > 1 ? "s are" : " is"} waiting for confirmation. Open Team →`));
+  }
+  out.push(h("div", { class: "tiles" },
+    tile("Open loans", open.length), tile("Overdue items", overdue.length, overdue.length > 0), tile("Closing in 7 days", closingWeek),
+    tile("Clear to close this month", ctcMonth), tile("Funded this month", fundedMonth)));
+  const byStage = STAGES.map((s) => [s, open.filter((l) => l.stage === s.key).length]).filter(([, n]) => n);
+  const max = Math.max(1, ...byStage.map(([, n]) => n));
+  const grid = h("div", { class: "grid2" },
+    h("div", { class: "panel" }, h("h2", null, "Open loans by stage"),
+      byStage.length ? h("div", { style: "display:flex;flex-direction:column;gap:6px" }, byStage.map(([s, n]) =>
+        h("div", { class: "hbar" }, h("span", null, s.label), h("div", { class: "track" }, h("i", { style: `width:${(n / max) * 100}%` })), h("span", { class: "num" }, n))))
+        : h("div", { class: "empty" }, "No open loans yet. Add one with New loan, or import your tracker spreadsheet.")),
+    h("div", { class: "panel" }, h("h2", null, "Next up"), workList(items.slice(0, 8))));
+  out.push(grid);
+  if (S.mgmt) out.push(h("div", { class: "panel" }, h("h2", null, "Processor workload"), workloadTable()));
+  return out;
+}
+const tile = (label, value, alert) => h("div", { class: "tile" + (alert ? " alert" : "") }, h("div", { class: "label" }, label), h("div", { class: "value" }, value));
+
+function workloadTable() {
+  const t = today();
+  const desks = [...PROCESSORS.map((n) => [n, S.mapping[n]]), ["Unassigned", "pool"]];
+  return h("div", { class: "scroll" }, h("table", null,
+    h("thead", null, h("tr", null, ["Processor", "Open", "On hold / restructured", "Closing in 14 days", "Overdue tasks", "Account"].map((x) => h("th", null, x)))),
+    h("tbody", null, desks.map(([name, desk]) => {
+      const ls = desk ? [...S.loans.values()].filter((l) => l.desk === desk) : [];
+      const open = ls.filter((l) => !isFinished(l.stage));
+      const od = open.flatMap((l) => (l.tasks || []).filter((x) => !x.doneAt && x.due && x.due < t)).length;
+      return h("tr", null, h("td", null, name), h("td", { class: "num" }, open.length),
+        h("td", { class: "num" }, open.filter((l) => ["on_hold", "restructured"].includes(l.stage)).length),
+        h("td", { class: "num" }, open.filter((l) => l.closingDate && l.closingDate >= t && l.closingDate <= addDays(t, 14)).length),
+        h("td", { class: "num" }, od ? h("span", { class: "pill t-red" }, od) : 0),
+        h("td", null, desk === "pool" ? "—" : desk ? h("span", { class: "pill t-green" }, "Linked") : h("span", { class: "pill t-amber" }, "Not linked")));
+    }))));
+}
+
+// ---- Loans -----------------------------------------------------------------
+function loansView() {
+  const f = S.filters;
+  let loans = allLoans();
+  if (f.processor) loans = loans.filter((l) => l.desk === f.processor);
+  if (f.lo) loans = loans.filter((l) => (l.loanOfficer || "") === f.lo);
+  if (f.q) { const q = f.q.toLowerCase(); loans = loans.filter((l) => [l.borrowerName, l.coBorrowerName, l.loanNumber, l.propertyAddress].some((x) => (x || "").toLowerCase().includes(q))); }
+  if (f.status === "open") loans = loans.filter((l) => !isFinished(l.stage));
+  else if (f.status === "finished") loans = loans.filter((l) => isFinished(l.stage));
+  else if (f.status) loans = loans.filter((l) => l.stage === f.status);
+  if (f.closeFrom) loans = loans.filter((l) => l.closingDate && l.closingDate >= f.closeFrom);
+  if (f.closeTo) loans = loans.filter((l) => l.closingDate && l.closingDate <= f.closeTo);
+  if (f.fundFrom) loans = loans.filter((l) => l.fundingDate && l.fundingDate >= f.fundFrom);
+  if (f.fundTo) loans = loans.filter((l) => l.fundingDate && l.fundingDate <= f.fundTo);
+  const los = [...new Set([...S.loans.values()].map((l) => l.loanOfficer).filter(Boolean))].sort();
+  const setF = (k) => (e) => { S.filters[k] = e.target.value; render(); };
+  const t = today();
+  return [
+    pageHead("Loans", `${loans.length} shown`, h("button", { class: "btn primary", onclick: () => newLoanDialog() }, "New loan")),
+    h("div", { class: "panel filters" },
+      field("Borrower or loan #", h("input", { id: "f-q", type: "search", value: f.q || "", oninput: setF("q"), placeholder: "Search" })),
+      S.mgmt ? field("Processor", h("select", { id: "f-proc", onchange: setF("processor") }, h("option", { value: "" }, "All"),
+        [...PROCESSORS.filter((n) => S.mapping[n]).map((n) => [S.mapping[n], n]), ["pool", "Unassigned"]].map(([v, n]) => h("option", { value: v, selected: f.processor === v }, n)))) : null,
+      field("Loan officer", h("select", { id: "f-lo", onchange: setF("lo") }, h("option", { value: "" }, "All"), los.map((x) => h("option", { value: x, selected: f.lo === x }, x)))),
+      field("Status", h("select", { id: "f-status", onchange: setF("status") }, h("option", { value: "" }, "All"), h("option", { value: "open", selected: f.status === "open" }, "All open"),
+        h("option", { value: "finished", selected: f.status === "finished" }, "All finished"), STAGES.map((s) => h("option", { value: s.key, selected: f.status === s.key }, s.label)))),
+      field("Closing from", h("input", { id: "f-cf", type: "date", value: f.closeFrom || "", onchange: setF("closeFrom") })),
+      field("Closing to", h("input", { id: "f-ct", type: "date", value: f.closeTo || "", onchange: setF("closeTo") })),
+      field("Funding from", h("input", { id: "f-ff", type: "date", value: f.fundFrom || "", onchange: setF("fundFrom") })),
+      field("Funding to", h("input", { id: "f-ft", type: "date", value: f.fundTo || "", onchange: setF("fundTo") })),
+      h("button", { class: "btn", onclick: () => { S.filters = {}; render(); } }, "Clear")),
+    h("div", { class: "panel" }, loans.length ? h("div", { class: "scroll" }, h("table", null,
+      h("thead", null, h("tr", null, ["Borrower", "Loan #", "Property", "Loan officer", S.mgmt ? "Processor" : null, "Status", "Progress", "Closing", "Funding"].filter(Boolean).map((x) => h("th", null, x)))),
+      h("tbody", null, loans.map((l) => {
+        const late = !isFinished(l.stage) && ((l.tasks || []).some((x) => !x.doneAt && x.due && x.due < t) || (l.closingDate && l.closingDate < t && pos(l.stage) < pos("closing")));
+        return h("tr", { class: "click" + (late ? " overdue" : ""), onclick: () => { S.openLoan = l.key; render(); window.scrollTo(0, 0); } },
+          h("td", null, h("strong", null, l.borrowerName || "Unnamed borrower")), h("td", { class: "mono" }, l.loanNumber || "—"),
+          h("td", null, l.propertyAddress || "—"), h("td", null, l.loanOfficer || "—"), S.mgmt ? h("td", null, deskName(l.desk)) : null,
+          h("td", null, pill(l.stage)), h("td", null, bar(progress(l))),
+          h("td", { class: "num" }, fmtDate(l.closingDate)), h("td", { class: "num" }, fmtDate(l.fundingDate)));
+      })))) : h("div", { class: "empty" }, S.loans.size ? "No loans match these filters." : "No loans yet. Use New loan to add the first one.")),
+  ];
+}
+const field = (label, input) => h("div", { class: "field" }, h("label", { for: input.id }, label), input);
+
+function newLoanDialog() {
+  S.openLoan = "__new"; render();
+}
+function newLoanForm() {
+  const deskOptions = S.mgmt ? [...PROCESSORS.filter((n) => S.mapping[n]).map((n) => [S.mapping[n], n]), ["pool", "Unassigned"]] : null;
+  return [
+    h("button", { class: "back", onclick: () => { S.openLoan = null; render(); } }, "← Back"),
+    pageHead("New loan", "Borrower name is required. Everything else can be filled in later."),
+    h("form", { class: "panel", onsubmit: async (e) => {
+      e.preventDefault();
+      if (!val("n-borrower")) return toast("Enter the borrower's name.");
+      const amount = val("n-amount") ? Number(val("n-amount").replace(/[$,]/g, "")) : null;
+      if (amount != null && (!isFinite(amount) || amount < 0)) return toast("Loan amount must be a positive number.");
+      const dup = [...S.loans.values()].find((l) => val("n-number") && (l.loanNumber || "").toLowerCase() === val("n-number").toLowerCase());
+      if (dup) return toast(`Loan number ${val("n-number")} already exists (${dup.borrowerName}).`);
+      const desk = S.mgmt ? val("n-desk") : S.me.id;
+      const id = uid();
+      const body = {
+        borrowerName: val("n-borrower"), coBorrowerName: val("n-co") || null, borrowerEmail: val("n-email") || null, borrowerPhone: val("n-phone") || null,
+        propertyAddress: val("n-address") || null, loanNumber: val("n-number") || null, lenderLoanNumber: val("n-lnum") || null,
+        loanAmount: amount, loanType: val("n-type") || null, lenderName: val("n-lender") || null, loanOfficer: val("n-lo") || null,
+        stage: "application", applicationDate: val("n-app") || today(), closingDate: val("n-close") || null, fundingDate: null,
+        rateLockExpires: val("n-lock") || null, notes: val("n-notes") || null, milestones: {}, requirements: [], tasks: [], comms: [],
+        createdBy: S.me.id, createdAt: nowIso(), updatedAt: nowIso(),
+        events: [{ type: "created", from: null, to: "application", by: S.me.id, at: nowIso() }],
+      };
+      const ref = desk === "pool" ? S.db.doc("pool/" + id) : S.db.doc(`desk/${desk}/loans/${id}`);
+      await write(ref, body);
+      S.openLoan = loanKey(desk, id); toast("Loan created"); render();
+    } },
+      h("div", { class: "form" },
+        field("Borrower name", h("input", { id: "n-borrower", required: true })), field("Co-borrower", h("input", { id: "n-co" })),
+        field("Borrower email", h("input", { id: "n-email", type: "email" })), field("Borrower phone", h("input", { id: "n-phone", type: "tel" })),
+        h("div", { class: "wide" }, field("Property address", h("input", { id: "n-address", style: "width:100%" }))),
+        field("Loan number", h("input", { id: "n-number" })), field("Lender loan number", h("input", { id: "n-lnum" })),
+        field("Loan amount", h("input", { id: "n-amount", inputmode: "decimal" })), field("Loan type", h("select", { id: "n-type" }, ["", "Conventional", "FHA", "VA", "USDA", "Jumbo", "Non-QM", "HELOC", "Other"].map((x) => h("option", { value: x }, x || "—")))),
+        field("Lender", h("input", { id: "n-lender", list: "lenders" })), field("Loan officer", h("input", { id: "n-lo", list: "los" })),
+        deskOptions ? field("Assigned processor", h("select", { id: "n-desk" }, deskOptions.map(([v, n]) => h("option", { value: v }, n)))) : null,
+        field("Application date", h("input", { id: "n-app", type: "date", value: today() })), field("Closing date", h("input", { id: "n-close", type: "date" })),
+        field("Rate lock expires", h("input", { id: "n-lock", type: "date" })),
+        h("div", { class: "wide" }, field("Notes", h("textarea", { id: "n-notes" })))),
+      h("datalist", { id: "lenders" }, S.contacts.filter((c) => c.category === "lender").map((c) => h("option", { value: c.company || c.name }))),
+      h("datalist", { id: "los" }, [...new Set([...S.loans.values()].map((l) => l.loanOfficer).filter(Boolean))].map((x) => h("option", { value: x }))),
+      h("div", { class: "actions", style: "margin-top:12px" }, h("button", { class: "btn primary", type: "submit" }, "Create loan"))),
+  ];
+}
+
+// ---- Loan profile ------------------------------------------------------------
+function loanView() {
+  if (S.openLoan === "__new") return newLoanForm();
+  const l = S.loans.get(S.openLoan);
+  if (!l) return [h("button", { class: "back", onclick: () => { S.openLoan = null; render(); } }, "← Back"), h("div", { class: "empty" }, "This loan is no longer available to you.")];
+  resolveNames([...(l.events || []).map((e) => e.by), ...(l.comms || []).map((c) => c.by)]);
+  const t = today(), locked = isFinished(l.stage);
+  const editField = (label, key, type = "text") => field(label, h("input", { id: "e-" + key, type, value: l[key] ?? "", onchange: (e) => {
+    let v = e.target.value.trim() || null;
+    if (key === "loanAmount" && v != null) { v = Number(v.replace(/[$,]/g, "")); if (!isFinite(v) || v < 0) return toast("Loan amount must be a positive number."); }
+    mutate(l, (b, ev) => { if (["closingDate", "fundingDate", "rateLockExpires"].includes(key)) ev(key + "_changed", b[key], v); b[key] = v; });
+  } }));
+  const out = [
+    h("button", { class: "back", onclick: () => { S.openLoan = null; render(); } }, "← All loans"),
+    h("div", { class: "head" },
+      h("div", null, h("h1", null, l.borrowerName || "Unnamed borrower"),
+        h("p", null, [l.loanNumber && "Loan " + l.loanNumber, l.propertyAddress, l.loanOfficer && "LO " + l.loanOfficer, S.mgmt && "Processor: " + deskName(l.desk)].filter(Boolean).join(" · "))),
+      h("div", { class: "actions" }, pill(l.stage), h("div", { style: "width:120px" }, bar(progress(l))), h("span", { class: "num muted" }, progress(l) + "%"))),
+  ];
+  // Deadlines
+  const dl = [["Closing", l.closingDate], ["Funding", l.fundingDate], ["Rate lock expires", l.rateLockExpires]];
+  out.push(h("div", { class: "tiles" }, dl.map(([lab, d]) => h("div", { class: "tile" + (d && d < t && !locked && lab !== "Funding" ? " alert" : "") },
+    h("div", { class: "label" }, lab), h("div", { class: "value", style: "font-size:1.1rem" }, fmtDate(d))))));
+  // Milestones
+  out.push(h("div", { class: "panel" },
+    h("div", { class: "head", style: "margin-bottom:12px" }, h("h2", null, "Milestones"),
+      h("div", { class: "actions" },
+        field("Status", h("select", { id: "e-stage", onchange: (e) => mutate(l, (b, ev) => setStage(b, ev, e.target.value)) }, STAGES.map((s) => h("option", { value: s.key, selected: s.key === l.stage }, s.label)))),
+        S.mgmt ? field("Processor", h("select", { id: "e-desk", onchange: (e) => reassign(l, e.target.value) },
+          [...PROCESSORS.filter((n) => S.mapping[n]).map((n) => [S.mapping[n], n]), ["pool", "Unassigned"]].map(([v, n]) => h("option", { value: v, selected: v === l.desk }, n)))) : null)),
+    locked ? h("p", { class: "muted" }, `This loan is ${stageInfo(l.stage).label.toLowerCase()}, so milestones are locked. Change the status to make corrections.`) : null,
+    h("div", { class: "steps" }, MILESTONES.map((m) => {
+      const done = l.milestones?.[m.key];
+      return h("div", { class: "step" + (done ? " done" : "") }, h("span", { class: "name" }, m.label),
+        h("span", { class: "date" }, done ? fmtDate(done.at) + " · " + personName(done.by) : "Not done"),
+        done ? h("button", { class: "btn small", disabled: locked, onclick: () => reopenMilestone(l, m.key) }, "Reopen")
+             : h("button", { class: "btn small primary", disabled: locked, onclick: () => completeMilestone(l, m.key) }, "Mark complete"));
+    }))));
+  // Checklists
+  out.push(h("div", { class: "grid2" }, reqPanel(l, "condition", "Conditions"), reqPanel(l, "document", "Required documents")));
+  // Tasks
+  out.push(tasksPanel(l));
+  // Details + communications
+  out.push(h("div", { class: "grid2" },
+    h("div", { class: "panel" }, h("h2", null, "Loan details"), h("div", { class: "form" },
+      editField("Borrower name", "borrowerName"), editField("Co-borrower", "coBorrowerName"), editField("Borrower email", "borrowerEmail", "email"), editField("Borrower phone", "borrowerPhone", "tel"),
+      editField("Property address", "propertyAddress"), editField("Loan number", "loanNumber"), editField("Lender loan #", "lenderLoanNumber"), editField("Loan amount", "loanAmount"),
+      editField("Loan type", "loanType"), editField("Lender", "lenderName"), editField("Loan officer", "loanOfficer"), editField("Application date", "applicationDate", "date"),
+      editField("Closing date", "closingDate", "date"), editField("Funding date", "fundingDate", "date"), editField("Rate lock expires", "rateLockExpires", "date"),
+      h("div", { class: "wide" }, field("Notes", h("textarea", { id: "e-notes", onchange: (e) => mutate(l, (b) => { b.notes = e.target.value; }) }, l.notes || ""))))),
+    commsPanel(l)));
+  // Activity
+  out.push(h("div", { class: "panel" }, h("h2", null, "Activity"), h("div", { class: "timeline" },
+    [...(l.events || [])].reverse().map((e) => h("div", null, h("time", null, fmtDT(e.at)), h("span", null, describeEvent(e), h("span", { class: "muted" }, " · " + personName(e.by))))))));
+  if (S.mgmt) out.push(h("div", { class: "actions" }, h("button", { class: "btn danger", onclick: (e) => confirmBtn(e.currentTarget, "Delete loan permanently?", async () => { await loanRef(l).delete(); S.openLoan = null; toast("Loan deleted"); render(); }) }, "Delete loan")));
+  return out;
+}
+function confirmBtn(btn, question, action) {
+  const wrap = h("span", { class: "actions" }, h("span", null, question), h("button", { class: "btn danger", onclick: action }, "Yes, delete"), h("button", { class: "btn", onclick: () => wrap.replaceWith(btn) }, "Keep"));
+  btn.replaceWith(wrap);
+}
+function describeEvent(e) {
+  const st = (k) => stageInfo(k).label, ms = (k) => msInfo(k)?.label || k;
+  switch (e.type) {
+    case "created": return "Loan created";
+    case "imported": return "Imported from " + (e.source || "spreadsheet") + (e.to ? " with status " + st(e.to) : "");
+    case "stage_changed": return `Status ${st(e.from)} → ${st(e.to)}`;
+    case "milestone_completed": return ms(e.to) + " completed" + (e.auto ? " (from status change)" : "");
+    case "milestone_reopened": return ms(e.from) + " reopened";
+    case "reassigned": return `Reassigned ${e.from} → ${e.to}`;
+    case "task_created": return "Task added: " + e.to;
+    case "task_completed": return "Task completed: " + e.to;
+    case "task_reopened": return "Task reopened: " + e.to;
+    case "requirement_added": return "Added: " + e.to;
+    case "requirement_status": return `${e.title}: ${e.from} → ${e.to}`;
+    case "communication": return "Logged " + e.to;
+    default: return e.type.replace(/_/g, " ").replace(/^\w/, (c) => c.toUpperCase()) + (e.from || e.to ? `: ${e.from ?? "—"} → ${e.to ?? "—"}` : "");
+  }
+}
+function reqPanel(l, kind, title) {
+  const reqs = (l.requirements || []).filter((r) => r.kind === kind), t = today(), idp = `r-${kind}`;
+  const statuses = kind === "condition" ? ["outstanding", "cleared", "waived"] : ["outstanding", "received", "waived"];
+  return h("div", { class: "panel" }, h("h2", null, title, " ", h("span", { class: "muted num" }, `${reqs.filter((r) => r.status !== "outstanding").length}/${reqs.length}`)),
+    h("div", { class: "list" }, reqs.map((r) => h("div", null,
+      h("input", { type: "checkbox", "aria-label": "Mark " + r.title, checked: r.status !== "outstanding", onchange: (e) => setReq(l, r.id, e.target.checked ? statuses[1] : "outstanding") }),
+      h("span", { class: "grow" + (r.status !== "outstanding" ? " done-text" : "") }, r.title, r.due ? h("span", { class: r.status === "outstanding" && r.due < t ? "pill t-red" : "muted", style: "margin-left:8px" }, "due " + fmtDate(r.due)) : null),
+      h("select", { "aria-label": "Status", onchange: (e) => setReq(l, r.id, e.target.value) }, statuses.map((s) => h("option", { value: s, selected: r.status === s }, s[0].toUpperCase() + s.slice(1))))))),
+    !reqs.length ? h("p", { class: "muted" }, kind === "condition" ? "No conditions yet." : "No required documents listed yet.") : null,
+    h("form", { class: "actions", style: "margin-top:10px", onsubmit: (e) => {
+      e.preventDefault(); const tt = val(idp + "-t"); if (!tt) return;
+      const due = val(idp + "-d") || null;
+      mutate(l, (b, ev) => { b.requirements = [...(b.requirements || []), { id: uid(), kind, title: tt, status: "outstanding", due, createdAt: nowIso(), by: S.me.id }]; ev("requirement_added", null, tt, { kind }); });
+      e.target.reset();
+    } }, h("input", { id: idp + "-t", placeholder: kind === "condition" ? "Add condition" : "Add document", style: "flex:1;min-width:140px" }), h("input", { id: idp + "-d", type: "date", "aria-label": "Due date" }), h("button", { class: "btn" }, "Add")));
+}
+function setReq(l, rid, status) {
+  mutate(l, (b, ev) => { const r = b.requirements.find((x) => x.id === rid); if (!r || r.status === status) return;
+    ev("requirement_status", r.status, status, { title: r.title }); r.status = status; r.resolvedAt = status === "outstanding" ? null : nowIso(); r.resolvedBy = status === "outstanding" ? null : S.me.id; });
+}
+function tasksPanel(l) {
+  const tasks = [...(l.tasks || [])].sort((a, b) => (!!a.doneAt - !!b.doneAt) || (a.due || "9999").localeCompare(b.due || "9999")), t = today();
+  return h("div", { class: "panel" }, h("h2", null, "Tasks"),
+    h("div", { class: "list" }, tasks.map((x) => h("div", null,
+      h("input", { type: "checkbox", "aria-label": "Complete " + x.title, checked: !!x.doneAt, onchange: (e) => toggleTask(l, x.id, e.target.checked) }),
+      h("span", { class: "grow" + (x.doneAt ? " done-text" : "") }, x.title),
+      x.kind === "borrower_follow_up" ? h("span", { class: "pill t-purple" }, "Borrower follow-up") : null,
+      x.due ? h("span", { class: !x.doneAt && x.due < t ? "pill t-red" : "muted num" }, (x.due < t && !x.doneAt ? "Overdue · " : "") + fmtDate(x.due)) : null,
+      x.doneAt ? h("span", { class: "muted", style: "font-size:0.8rem" }, "Done " + fmtDate(x.doneAt) + " · " + personName(x.doneBy)) : null))),
+    !tasks.length ? h("p", { class: "muted" }, "No tasks on this loan.") : null,
+    h("form", { class: "actions", style: "margin-top:10px", onsubmit: (e) => {
+      e.preventDefault(); const tt = val("t-title"); if (!tt) return toast("Enter a task.");
+      const task = { id: uid(), title: tt, kind: val("t-kind") || "task", due: val("t-due") || null, doneAt: null, doneBy: null, createdBy: S.me.id, createdAt: nowIso() };
+      mutate(l, (b, ev) => { b.tasks = [...(b.tasks || []), task]; ev("task_created", null, tt, { due: task.due }); }); e.target.reset();
+    } }, h("input", { id: "t-title", placeholder: "Add a task", style: "flex:1;min-width:160px" }),
+      h("select", { id: "t-kind", "aria-label": "Task type" }, h("option", { value: "task" }, "Task"), h("option", { value: "borrower_follow_up" }, "Borrower follow-up"), h("option", { value: "lender_follow_up" }, "Lender follow-up"), h("option", { value: "title_follow_up" }, "Title follow-up")),
+      h("input", { id: "t-due", type: "date", "aria-label": "Due date" }), h("button", { class: "btn" }, "Add task")));
+}
+function toggleTask(l, tid, done) {
+  mutate(l, (b, ev) => { const x = b.tasks.find((y) => y.id === tid); if (!x || !!x.doneAt === done) return;
+    x.doneAt = done ? nowIso() : null; x.doneBy = done ? S.me.id : null; ev(done ? "task_completed" : "task_reopened", null, x.title); });
+}
+function commsPanel(l) {
+  const comms = [...(l.comms || [])].reverse();
+  return h("div", { class: "panel" }, h("h2", null, "Notes & conversations"),
+    h("form", { onsubmit: (e) => {
+      e.preventDefault(); const body = val("c-body"); if (!body) return;
+      const c = { id: uid(), channel: val("c-ch"), with: val("c-with") || null, body: body.slice(0, 5000), at: nowIso(), by: S.me.id };
+      mutate(l, (b, ev) => { b.comms = [...(b.comms || []), c]; ev("communication", null, c.channel + (c.with ? " with " + c.with : "")); }); e.target.reset();
+    } }, h("div", { class: "actions" },
+      h("select", { id: "c-ch", "aria-label": "Type" }, ["note", "call", "email", "text", "meeting"].map((x) => h("option", { value: x }, x[0].toUpperCase() + x.slice(1)))),
+      h("input", { id: "c-with", placeholder: "With (borrower, lender, title…)", style: "flex:1;min-width:140px" })),
+      h("textarea", { id: "c-body", placeholder: "What was said or decided", style: "margin-top:8px" }),
+      h("div", { class: "actions", style: "margin-top:6px" }, h("button", { class: "btn" }, "Log"))),
+    h("div", { class: "timeline", style: "margin-top:12px" }, comms.map((c) => h("div", null, h("time", null, fmtDT(c.at)),
+      h("span", null, h("strong", null, c.channel[0].toUpperCase() + c.channel.slice(1) + (c.with ? " · " + c.with : "")), h("br"), c.body, h("span", { class: "muted" }, " — " + personName(c.by)))))));
+}
+
+// ---- Daily tasks ---------------------------------------------------------------
+function tasksView() {
+  const items = workItems();
+  const groups = ["Overdue task", "Closing date passed", "Rate lock expiring", "Task due soon", "Borrower follow-up", "Outstanding condition", "Missing document", "Upcoming closing"];
+  const counts = Object.fromEntries(groups.map((g) => [g, items.filter((i) => i.type === g).length]));
+  return [pageHead("Daily tasks", S.mgmt ? "All processors" : "Your assigned loans"),
+    items.some((i) => i.sev === 1) ? h("div", { class: "banner" }, `${items.filter((i) => i.sev === 1).length} overdue. Red items are past their date.`) : null,
+    h("div", { class: "tiles" }, tile("Overdue", items.filter((i) => i.sev === 1).length, items.some((i) => i.sev === 1)), tile("Follow-ups", counts["Borrower follow-up"]),
+      tile("Conditions", counts["Outstanding condition"]), tile("Missing docs", counts["Missing document"]), tile("Closings in 7 days", counts["Upcoming closing"])),
+    h("div", { class: "panel" }, workList(items))];
+}
+function workList(items) {
+  if (!items.length) return h("div", { class: "empty" }, "Nothing due. Tasks, conditions, documents and closing dates on your loans will show here.");
+  return h("div", { class: "scroll" }, h("table", null, h("thead", null, h("tr", null, ["", "Item", "Borrower", S.mgmt ? "Processor" : null, "Date"].filter((x) => x !== null).map((x) => h("th", null, x)))),
+    h("tbody", null, items.map((i) => h("tr", { class: "click" + (i.sev === 1 ? " overdue" : ""), onclick: () => { S.openLoan = i.loan.key; render(); window.scrollTo(0, 0); } },
+      h("td", null, h("span", { class: "item-type", style: `color:var(${i.sev === 1 ? "--bad" : i.type === "Upcoming closing" ? "--ok" : "--muted"})` }, i.type)),
+      h("td", null, i.title), h("td", null, i.loan.borrowerName || "—"), S.mgmt ? h("td", null, deskName(i.loan.desk)) : null, h("td", { class: "num" }, fmtDate(i.due)))))));
+}
+
+// ---- Contacts ------------------------------------------------------------------
+const CATS = [["lender", "Lender"], ["title", "Title company"], ["insurance", "Insurance agent"], ["appraiser", "Appraiser"], ["attorney", "Attorney"], ["realtor", "Realtor"], ["other", "Other"]];
+function contactsView() {
+  const q = (S.filters.cq || "").toLowerCase(), cat = S.filters.cc || "";
+  const list = S.contacts.filter((c) => (!cat || c.category === cat) && (!q || [c.company, c.name, c.email, c.phone, c.notes].some((x) => (x || "").toLowerCase().includes(q))))
+    .sort((a, b) => (a.company || a.name || "").localeCompare(b.company || b.name || ""));
+  return [pageHead("Contacts", `${S.contacts.length} in the directory`),
+    h("div", { class: "panel filters" },
+      field("Search", h("input", { id: "c-q", type: "search", value: S.filters.cq || "", oninput: (e) => { S.filters.cq = e.target.value; render(); } })),
+      field("Type", h("select", { id: "c-cat", onchange: (e) => { S.filters.cc = e.target.value; render(); } }, h("option", { value: "" }, "All"), CATS.map(([k, n]) => h("option", { value: k, selected: cat === k }, n))))),
+    h("div", { class: "panel" }, list.length ? h("div", { class: "scroll" }, h("table", null,
+      h("thead", null, h("tr", null, ["Company", "Name", "Type", "Email", "Phone", "Notes", ""].map((x) => h("th", null, x)))),
+      h("tbody", null, list.map((c) => h("tr", null, h("td", null, h("strong", null, c.company || "—")), h("td", null, c.name || "—"), h("td", null, CATS.find(([k]) => k === c.category)?.[1] || c.category),
+        h("td", { class: "mono", style: "user-select:all" }, c.email || "—"), h("td", { class: "mono", style: "user-select:all" }, c.phone || "—"), h("td", { class: "muted" }, c.notes || ""),
+        h("td", null, S.mgmt ? h("button", { class: "btn small danger", onclick: (e) => confirmBtn(e.currentTarget, "Delete?", () => S.db.doc("contacts/" + c.id).delete()) }, "Delete") : null))))))
+      : h("div", { class: "empty" }, S.contacts.length ? "No contacts match." : "No contacts yet. Add lenders, title companies and insurance agents below.")),
+    h("form", { class: "panel", onsubmit: async (e) => {
+      e.preventDefault();
+      if (!val("k-company") && !val("k-name")) return toast("Enter a company or a person's name.");
+      if (val("k-email") && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(val("k-email"))) return toast("That email address doesn't look right.");
+      await write(S.db.doc("contacts/" + uid()), { category: val("k-cat"), company: val("k-company") || null, name: val("k-name") || null, email: val("k-email") || null, phone: val("k-phone") || null, notes: val("k-notes") || null, createdBy: S.me.id, createdAt: nowIso() });
+      e.target.reset(); toast("Contact added");
+    } }, h("h2", null, "Add contact"), h("div", { class: "form" },
+      field("Type", h("select", { id: "k-cat" }, CATS.map(([k, n]) => h("option", { value: k }, n)))), field("Company", h("input", { id: "k-company" })), field("Name", h("input", { id: "k-name" })),
+      field("Email", h("input", { id: "k-email", type: "email" })), field("Phone", h("input", { id: "k-phone", type: "tel" })), h("div", { class: "wide" }, field("Notes", h("input", { id: "k-notes", style: "width:100%" })))),
+      h("div", { class: "actions", style: "margin-top:10px" }, h("button", { class: "btn primary" }, "Add contact")))];
+}
+
+// ---- Finance (management) --------------------------------------------------------
+function invoiceTotals(inv) {
+  const total = (Number(inv.processingFee) || 0) + (Number(inv.otherFees) || 0);
+  const paid = (inv.payments || []).reduce((s, p) => s + (Number(p.amount) || 0), 0);
+  const balance = Math.round((total - paid) * 100) / 100;
+  const status = inv.status === "void" ? "Void" : balance <= 0 ? "Paid" : inv.dueOn && inv.dueOn < today() ? "Overdue" : inv.status === "draft" ? "Draft" : "Open";
+  return { total, paid, balance, status };
+}
+function financeView() {
+  const inv = [...S.invoices].sort((a, b) => (b.issuedOn || "").localeCompare(a.issuedOn || ""));
+  const live = inv.filter((i) => i.status !== "void").map((i) => ({ i, ...invoiceTotals(i) }));
+  const outstanding = live.reduce((s, x) => s + Math.max(0, x.balance), 0);
+  const overdue = live.filter((x) => x.status === "Overdue");
+  const m = monthKey(today());
+  const funded = allLoans().filter((l) => l.stage === "funded");
+  const loanOpts = allLoans().map((l) => h("option", { value: l.key }, (l.borrowerName || "Unnamed") + (l.loanNumber ? " · " + l.loanNumber : "")));
+  return [pageHead("Finance", "Visible to management only"),
+    h("div", { class: "tiles" },
+      tile("Outstanding receivables", money(outstanding)), tile("Overdue invoices", overdue.length, overdue.length > 0),
+      tile("Invoiced this month", money(live.filter((x) => monthKey(x.i.issuedOn) === m).reduce((s, x) => s + x.total, 0))),
+      tile("Collected this month", money(live.flatMap((x) => x.i.payments || []).filter((p) => monthKey(p.receivedOn) === m).reduce((s, p) => s + Number(p.amount), 0))),
+      tile("Funded loans", funded.length)),
+    h("div", { class: "panel" }, h("h2", null, "Invoices & receivables"), inv.length ? h("div", { class: "scroll" }, h("table", null,
+      h("thead", null, h("tr", null, ["Invoice", "Loan", "Issued", "Due", "Processing fee", "Total", "Paid", "Balance", "Status", "Record payment"].map((x) => h("th", null, x)))),
+      h("tbody", null, inv.map((i) => { const x = invoiceTotals(i), loan = S.loans.get(i.loanKey);
+        return h("tr", { class: x.status === "Overdue" ? "overdue" : "" }, h("td", { class: "mono" }, i.number), h("td", null, loan?.borrowerName || i.borrower || "—"),
+          h("td", { class: "num" }, fmtDate(i.issuedOn)), h("td", { class: "num" }, fmtDate(i.dueOn)), h("td", { class: "num" }, money(i.processingFee)), h("td", { class: "num" }, money(x.total)),
+          h("td", { class: "num" }, money(x.paid)), h("td", { class: "num" }, money(x.balance)),
+          h("td", null, h("span", { class: "pill " + ({ Paid: "t-green", Overdue: "t-red", Void: "t-slate", Draft: "t-slate", Open: "t-blue" })[x.status] }, x.status)),
+          h("td", null, x.status === "Paid" || x.status === "Void" ? "" : h("form", { class: "actions", onsubmit: (e) => {
+            e.preventDefault(); const amt = Number(e.target.amt.value); if (!(amt > 0)) return toast("Enter a payment amount above zero.");
+            write(S.db.doc("invoices/" + i.id), { ...strip2(i), status: i.status === "draft" ? "sent" : i.status, payments: [...(i.payments || []), { id: uid(), amount: Math.round(amt * 100) / 100, receivedOn: e.target.on.value || today(), method: e.target.method.value, by: S.me.id, at: nowIso() }] });
+          } }, h("input", { name: "amt", inputmode: "decimal", placeholder: "Amount", style: "width:90px", "aria-label": "Amount" }), h("input", { name: "on", type: "date", value: today(), "aria-label": "Received on" }),
+            h("select", { name: "method", "aria-label": "Method" }, ["check", "ach", "wire", "card", "other"].map((mm) => h("option", { value: mm }, mm.toUpperCase()))), h("button", { class: "btn small" }, "Add"))));
+      })))) : h("div", { class: "empty" }, "No invoices recorded yet.")),
+    h("form", { class: "panel", onsubmit: async (e) => {
+      e.preventDefault(); const num = val("i-num"); if (!num) return toast("Enter an invoice number.");
+      if (S.invoices.some((x) => x.number === num)) return toast("Invoice " + num + " already exists.");
+      const fee = Number(val("i-fee") || 0), other = Number(val("i-other") || 0);
+      if (!(fee >= 0) || !(other >= 0)) return toast("Fees must be zero or more.");
+      const loan = S.loans.get(val("i-loan"));
+      await write(S.db.doc("invoices/" + uid()), { number: num, loanKey: val("i-loan") || null, borrower: loan?.borrowerName || null, billTo: val("i-bill") || null, issuedOn: val("i-issued") || today(), dueOn: val("i-due") || null, processingFee: fee, otherFees: other, status: val("i-status"), payments: [], createdBy: S.me.id, createdAt: nowIso() });
+      e.target.reset(); toast("Invoice recorded");
+    } }, h("h2", null, "New invoice"), h("div", { class: "form" },
+      field("Invoice #", h("input", { id: "i-num" })), field("Loan", h("select", { id: "i-loan" }, h("option", { value: "" }, "—"), loanOpts)), field("Bill to", h("input", { id: "i-bill", list: "billto" })),
+      field("Issued", h("input", { id: "i-issued", type: "date", value: today() })), field("Due", h("input", { id: "i-due", type: "date" })),
+      field("Processing fee", h("input", { id: "i-fee", inputmode: "decimal" })), field("Other fees", h("input", { id: "i-other", inputmode: "decimal" })),
+      field("Status", h("select", { id: "i-status" }, h("option", { value: "sent" }, "Sent"), h("option", { value: "draft" }, "Draft")))),
+      h("datalist", { id: "billto" }, S.contacts.map((c) => h("option", { value: c.company || c.name }))),
+      h("div", { class: "actions", style: "margin-top:10px" }, h("button", { class: "btn primary" }, "Record invoice"))),
+    h("div", { class: "panel" }, h("h2", null, "Funded loans"), funded.length ? h("div", { class: "scroll" }, h("table", null,
+      h("thead", null, h("tr", null, ["Borrower", "Loan #", "Processor", "Loan officer", "Amount", "Funding date", "Invoiced"].map((x) => h("th", null, x)))),
+      h("tbody", null, funded.map((l) => h("tr", null, h("td", null, l.borrowerName), h("td", { class: "mono" }, l.loanNumber || "—"), h("td", null, deskName(l.desk)), h("td", null, l.loanOfficer || "—"),
+        h("td", { class: "num" }, l.loanAmount != null ? money(l.loanAmount) : "—"), h("td", { class: "num" }, fmtDate(l.fundingDate || l.milestones?.funding?.at)),
+        h("td", { class: "num" }, money(S.invoices.filter((i) => i.loanKey === l.key && i.status !== "void").reduce((s, i) => s + invoiceTotals(i).total, 0))))))))
+      : h("div", { class: "empty" }, "No funded loans yet.")),
+    payrollPanel()];
+}
+function strip2(o) { const { id, ...rest } = o; return rest; }
+function payrollPanel() {
+  const rows = [...S.payroll].sort((a, b) => (b.periodEnd || "").localeCompare(a.periodEnd || ""));
+  return [h("div", { class: "panel" }, h("h2", null, "Payroll records"),
+    h("p", { class: "muted", style: "margin-top:-6px" }, "Record-keeping only. This does not pay anyone or calculate taxes."),
+    rows.length ? h("div", { class: "scroll" }, h("table", null,
+      h("thead", null, h("tr", null, ["Processor", "Period", "Basis", "Qty", "Rate", "Amount", "Status", "Notes"].map((x) => h("th", null, x)))),
+      h("tbody", null, rows.map((r) => h("tr", null, h("td", null, r.processor), h("td", { class: "num" }, fmtDate(r.periodStart) + " – " + fmtDate(r.periodEnd)), h("td", null, r.basis),
+        h("td", { class: "num" }, r.quantity ?? "—"), h("td", { class: "num" }, r.rate != null ? money(r.rate) : "—"), h("td", { class: "num" }, money(r.amount)),
+        h("td", null, h("button", { class: "btn small", onclick: () => write(S.db.doc("payroll/" + r.id), { ...strip2(r), status: r.status === "approved" ? "recorded" : "approved" }) }, r.status === "approved" ? "Approved" : "Recorded")),
+        h("td", { class: "muted" }, r.notes || ""))))))
+      : h("div", { class: "empty" }, "No payroll records yet."),
+    h("div", { class: "actions", style: "margin-top:10px" }, PROCESSORS.map((p) => h("span", { class: "muted num" }, `${p}: ${money(rows.filter((r) => r.processor === p && monthKey(r.periodEnd) === monthKey(today())).reduce((s, r) => s + Number(r.amount), 0))} this month`)))),
+    h("form", { class: "panel", onsubmit: async (e) => {
+      e.preventDefault(); const ps = val("p-start"), pe = val("p-end");
+      if (!ps || !pe || pe < ps) return toast("Enter a pay period with the end on or after the start.");
+      const qty = val("p-qty") ? Number(val("p-qty")) : null, rate = val("p-rate") ? Number(val("p-rate")) : null;
+      let amount = val("p-amount") ? Number(val("p-amount")) : qty != null && rate != null ? Math.round(qty * rate * 100) / 100 : NaN;
+      if (!isFinite(amount)) return toast("Enter an amount, or a quantity and rate.");
+      await write(S.db.doc("payroll/" + uid()), { processor: val("p-proc"), periodStart: ps, periodEnd: pe, basis: val("p-basis"), quantity: qty, rate, amount, status: "recorded", notes: val("p-notes") || null, createdBy: S.me.id, createdAt: nowIso() });
+      e.target.reset(); toast("Payroll record added");
+    } }, h("h2", null, "Add payroll record"), h("div", { class: "form" },
+      field("Processor", h("select", { id: "p-proc" }, PROCESSORS.map((p) => h("option", { value: p }, p)))), field("Period start", h("input", { id: "p-start", type: "date" })), field("Period end", h("input", { id: "p-end", type: "date" })),
+      field("Basis", h("select", { id: "p-basis" }, [["per_file", "Per file"], ["hourly", "Hourly"], ["salary", "Salary"], ["bonus", "Bonus"], ["adjustment", "Adjustment"]].map(([k, n]) => h("option", { value: k }, n)))),
+      field("Quantity", h("input", { id: "p-qty", inputmode: "decimal" })), field("Rate", h("input", { id: "p-rate", inputmode: "decimal" })), field("Amount", h("input", { id: "p-amount", inputmode: "decimal", placeholder: "Qty × rate if blank" })),
+      h("div", { class: "wide" }, field("Notes", h("input", { id: "p-notes", style: "width:100%" })))),
+      h("div", { class: "actions", style: "margin-top:10px" }, h("button", { class: "btn primary" }, "Add record")))];
+}
+
+// ---- Reports (management) --------------------------------------------------------
+function reportsView() {
+  const loans = allLoans();
+  const months = []; { const d = new Date(); for (let i = 5; i >= 0; i--) { const x = new Date(d.getFullYear(), d.getMonth() - i, 1); months.push(x.toISOString().slice(0, 7)); } }
+  const per = months.map((m) => ({ m, ctc: loans.filter((l) => monthKey(l.milestones?.clear_to_close?.at) === m).length, funded: loans.filter((l) => monthKey(l.milestones?.funding?.at) === m).length,
+    fees: S.invoices.filter((i) => i.status !== "void" && monthKey(i.issuedOn) === m).reduce((s, i) => s + invoiceTotals(i).total, 0) }));
+  const max = Math.max(1, ...per.flatMap((p) => [p.ctc, p.funded]));
+  const turn = PROCESSORS.map((n) => [n, S.mapping[n]]).concat([["Unassigned", "pool"]]).map(([n, desk]) => {
+    const ls = loans.filter((l) => l.desk === desk);
+    const ctc = ls.map((l) => l.milestones?.submission && l.milestones?.clear_to_close ? daysBetween(l.milestones.submission.at, l.milestones.clear_to_close.at) : null).filter((x) => x != null);
+    const fund = ls.map((l) => l.milestones?.submission && l.milestones?.funding ? daysBetween(l.milestones.submission.at, l.milestones.funding.at) : null).filter((x) => x != null);
+    const avg = (a) => a.length ? (a.reduce((s, x) => s + x, 0) / a.length).toFixed(1) : "—";
+    return { n, ctc: avg(ctc), ctcN: ctc.length, fund: avg(fund), fundN: fund.length };
+  });
+  const mlabel = (m) => new Date(m + "-15").toLocaleDateString(undefined, { month: "short", year: "2-digit" });
+  return [pageHead("Reports", "Calculated from recorded milestones and invoices only"),
+    h("div", { class: "grid2" },
+      h("div", { class: "panel" }, h("h2", null, "Clear to close and funded, by month"),
+        h("div", { class: "actions", style: "margin-bottom:8px" }, h("span", null, h("span", { class: "swatch", style: "background:var(--accent)" }), "Clear to close"), h("span", null, h("span", { class: "swatch", style: "background:var(--info)" }), "Funded")),
+        h("div", { style: "display:flex;flex-direction:column;gap:6px" }, per.map((p) => [
+          h("div", { class: "hbar" }, h("span", null, mlabel(p.m)), h("div", { class: "track" }, h("i", { style: `width:${(p.ctc / max) * 100}%` })), h("span", { class: "num" }, p.ctc)),
+          h("div", { class: "hbar" }, h("span", null, ""), h("div", { class: "track" }, h("i", { class: "alt", style: `width:${(p.funded / max) * 100}%` })), h("span", { class: "num" }, p.funded))]))),
+      h("div", { class: "panel" }, h("h2", null, "Invoiced fees by month"), h("div", { class: "scroll" }, h("table", null,
+        h("thead", null, h("tr", null, h("th", null, "Month"), h("th", null, "Invoiced"), h("th", null, "Collected"))),
+        h("tbody", null, per.map((p) => h("tr", null, h("td", null, mlabel(p.m)), h("td", { class: "num" }, money(p.fees)),
+          h("td", { class: "num" }, money(S.invoices.flatMap((i) => i.payments || []).filter((x) => monthKey(x.receivedOn) === p.m).reduce((s, x) => s + Number(x.amount), 0)))))))))),
+    h("div", { class: "panel" }, h("h2", null, "Processor workload"), workloadTable()),
+    h("div", { class: "panel" }, h("h2", null, "Turnaround"), h("p", { class: "muted", style: "margin-top:-6px" }, "Average days from recorded submission. Loans without both milestone dates are left out."),
+      h("div", { class: "scroll" }, h("table", null, h("thead", null, h("tr", null, ["Processor", "Submission → clear to close", "Loans", "Submission → funded", "Loans"].map((x) => h("th", null, x)))),
+        h("tbody", null, turn.map((r) => h("tr", null, h("td", null, r.n), h("td", { class: "num" }, r.ctc), h("td", { class: "num" }, r.ctcN), h("td", { class: "num" }, r.fund), h("td", { class: "num" }, r.fundN)))))))];
+}
+
+// ---- Team (management) ---------------------------------------------------------
+function teamView() {
+  const entries = Object.entries(S.roster);
+  return [pageHead("Team", "Link each processor's account. A processor sees only the loans assigned to their account."),
+    h("div", { class: "banner info" }, "Share this page with processors as Contributor, and with managers as Editor. Anyone with Editor access sees everything, including Finance."),
+    h("div", { class: "panel" }, h("h2", null, "Processors"), h("div", { class: "scroll" }, h("table", null,
+      h("thead", null, h("tr", null, ["Processor", "Linked account", "Change"].map((x) => h("th", null, x)))),
+      h("tbody", null, PROCESSORS.map((n) => {
+        const cur = S.mapping[n];
+        return h("tr", null, h("td", null, h("strong", null, n)), h("td", null, cur ? personName(cur) : h("span", { class: "pill t-amber" }, "Not linked")),
+          h("td", null, h("select", { "aria-label": "Account for " + n, onchange: (e) => saveMapping(n, e.target.value || null) }, h("option", { value: "" }, "— Not linked —"),
+            entries.map(([id, r]) => h("option", { value: id, selected: cur === id }, (S.names[id] || "Account") + " (asked to be " + r.name + ")")))));
+      }))))),
+    h("div", { class: "panel" }, h("h2", null, "Requests"), entries.length ? h("div", { class: "list" }, entries.map(([id, r]) => {
+      const linkedAs = Object.entries(S.mapping).find(([, v]) => v === id)?.[0];
+      return h("div", null, h("span", { class: "grow" }, h("strong", null, S.names[id] || "Account"), " asked to be ", r.name, h("span", { class: "muted" }, " · " + fmtDate(r.requestedAt))),
+        linkedAs ? h("span", { class: "pill t-green" }, "Linked as " + linkedAs) : h("button", { class: "btn small primary", onclick: () => saveMapping(r.name, id) }, "Link as " + r.name));
+    })) : h("div", { class: "empty" }, "No one has asked yet. When a processor opens this page, they pick their name and appear here."))];
+}
+async function saveMapping(name, id) {
+  const mapping = { ...S.mapping };
+  for (const k of Object.keys(mapping)) if (mapping[k] === id) mapping[k] = null;
+  mapping[name] = id;
+  await write(S.db.doc("settings/processors"), { mapping, updatedBy: S.me.id, updatedAt: nowIso() });
+  toast(id ? name + " linked" : name + " unlinked");
+}
+
+// ---- Import (management) ---------------------------------------------------------
+const KNOWN_COLORS = {
+  "7030A0": "purple", "800080": "purple", "CCC0DA": "purple", "E4DFEC": "purple", "B1A0C7": "purple", "9966FF": "purple",
+  "00B050": "green", "92D050": "green", "C6EFCE": "green", "E2EFDA": "green", "A9D08E": "green", "00FF00": "green", "70AD47": "green",
+  "FFC000": "orange", "FFA500": "orange", "F4B084": "orange", "FCE4D6": "orange", "ED7D31": "orange", "F8CBAD": "orange", "FF9900": "orange",
+  "FFFF00": "yellow", "FFEB9C": "yellow", "FFF2CC": "yellow", "FFE699": "yellow", "FFD966": "yellow",
+};
+const BANDS = [["orange", 18, 42], ["yellow", 48, 64], ["green", 80, 160], ["purple", 262, 318]];
+function classifyColor(input) {
+  if (!input) return { ok: false, reason: "No highlight color", hex: null };
+  let hex = String(input).trim().replace(/^#/, "").toUpperCase();
+  if (/^[0-9A-F]{8}$/.test(hex)) hex = hex.slice(2);
+  if (!/^[0-9A-F]{6}$/.test(hex)) return { ok: false, reason: "Unreadable color", hex: null };
+  if (KNOWN_COLORS[hex]) return { ok: true, color: KNOWN_COLORS[hex], processor: COLOR_TO_PROCESSOR[KNOWN_COLORS[hex]], exact: true, hex };
+  const [r, g, b] = [0, 2, 4].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255);
+  const mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2, d = mx - mn;
+  const s = d === 0 ? 0 : d / (1 - Math.abs(2 * l - 1));
+  let hue = d === 0 ? 0 : mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; hue = (hue * 60 + 360) % 360;
+  if (s < 0.25 || l > 0.94 || l < 0.12) return { ok: false, reason: "Not a processor color", hex };
+  const band = BANDS.find(([, lo, hi]) => hue >= lo && hue <= hi);
+  if (!band) return { ok: false, reason: "Ambiguous color", hex };
+  return { ok: true, color: band[0], processor: COLOR_TO_PROCESSOR[band[0]], exact: false, hex };
+}
+function themePalette(xml) {
+  if (!xml) return [];
+  return ["lt1", "dk1", "lt2", "dk2", "accent1", "accent2", "accent3", "accent4", "accent5", "accent6", "hlink", "folHlink"].map((tag) => {
+    const m = xml.match(new RegExp(`<a:${tag}>([\\s\\S]*?)</a:${tag}>`)); return m?.[1].match(/(?:srgbClr val|lastClr)="([0-9A-Fa-f]{6})"/)?.[1]?.toUpperCase() || "";
+  });
+}
+function themeHex(pal, theme, tint = 0) {
+  const base = pal[theme]; if (!base) return null;
+  return [0, 2, 4].map((i) => parseInt(base.slice(i, i + 2), 16)).map((c) => Math.max(0, Math.min(255, Math.round(tint < 0 ? c * (1 + tint) : c + (255 - c) * tint))).toString(16).padStart(2, "0")).join("").toUpperCase();
+}
+const SYN = {
+  borrowerName: ["borrower", "borrower name", "client", "name"], loanNumber: ["loan #", "loan number", "loan no", "loan no.", "loan num"],
+  loanOfficer: ["loan officer", "lo"], propertyAddress: ["property", "property address", "address", "subject property"], lenderName: ["lender"],
+  loanAmount: ["loan amount", "amount"], stage: ["status", "stage"], applicationDate: ["app date", "application date", "date"],
+  closingDate: ["closing", "closing date", "close date", "coe"], fundingDate: ["funding", "funding date", "funded", "fund date"], notes: ["notes", "comments"],
+};
+const STAGE_SYN = { ctc: "clear_to_close", "clear to close": "clear_to_close", closed: "closing", hold: "on_hold", "on hold": "on_hold", "in uw": "underwriting", uw: "underwriting", locked: "rate_locked", canceled: "cancelled", withdrawn: "cancelled", declined: "denied", new: "application", funded: "funded" };
+function parseStage(v) { const s = String(v ?? "").trim().toLowerCase(); if (!s) return null; return STAGES.find((x) => x.key === s.replace(/ /g, "_") || x.label.toLowerCase() === s)?.key || STAGE_SYN[s] || null; }
+function cellVal(v) {
+  if (v == null) return null; if (v instanceof Date) return v.toISOString().slice(0, 10); if (typeof v === "number") return v;
+  if (typeof v === "object") { if ("result" in v) return cellVal(v.result); if ("richText" in v) return v.richText.map((t) => t.text).join(""); if ("text" in v) return String(v.text); }
+  const s = String(v).trim(); return s || null;
+}
+const norm = (s) => String(s ?? "").toLowerCase().replace(/[^a-z0-9]/g, "");
+function loadExcel() {
+  if (window.ExcelJS) return Promise.resolve();
+  return new Promise((res, rej) => { const s = document.createElement("script"); s.src = "https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"; s.onload = res; s.onerror = () => rej(new Error("load")); document.head.append(s); });
+}
+async function previewFile(file) {
+  if (!/\.xlsx$/i.test(file.name)) { toast(/\.csv$/i.test(file.name) ? "CSV files don't keep highlight colors. Export the tracker as .xlsx instead." : "Choose an .xlsx workbook."); return; }
+  S.importPreview = { loading: true, file: file.name }; render();
+  try { await loadExcel(); } catch { S.importPreview = null; render(); return toast("Couldn't load the spreadsheet reader. Check your connection and try again."); }
+  const wb = new ExcelJS.Workbook();
+  try { await wb.xlsx.load(await file.arrayBuffer()); } catch { S.importPreview = null; render(); return toast("That file couldn't be read as an Excel workbook."); }
+  const pal = themePalette(wb._themes?.theme1);
+  const existing = [...S.loans.values()];
+  const rows = [], colMap = {}, unmapped = new Set();
+  for (const ws of wb.worksheets) {
+    let hr = 0; const cols = {};
+    for (let r = 1; r <= Math.min(10, ws.rowCount) && !hr; r++) {
+      const hs = []; ws.getRow(r).eachCell((c, col) => hs.push([col, String(cellVal(c.value) ?? "").trim()]));
+      if (!hs.some(([, x]) => SYN.loanOfficer.includes(x.toLowerCase()))) continue;
+      hr = r;
+      for (const [col, x] of hs) { const f = Object.entries(SYN).find(([k, syn]) => !cols[k] && syn.includes(x.toLowerCase()))?.[0]; if (f) { cols[f] = col; colMap[f] = x; } else if (x) unmapped.add(x); }
+    }
+    if (!hr) continue;
+    for (let r = hr + 1; r <= ws.rowCount; r++) {
+      const row = ws.getRow(r), v = {};
+      for (const [f, col] of Object.entries(cols)) v[f] = cellVal(row.getCell(col).value);
+      if (Object.values(v).every((x) => x == null)) continue;
+      const fill = row.getCell(cols.loanOfficer).fill, c = fill?.type === "pattern" && fill.pattern !== "none" ? (fill.fgColor || fill.bgColor) : null;
+      const color = classifyColor(c?.argb || (c?.theme != null ? themeHex(pal, c.theme, c.tint || 0) : null));
+      const issues = [];
+      if (!v.borrowerName) issues.push("Missing borrower"); if (!v.loanNumber) issues.push("Missing loan #"); if (!v.loanOfficer) issues.push("Missing loan officer");
+      if (!color.ok) issues.push(color.reason + (color.hex ? " #" + color.hex : "")); else if (!color.exact) issues.push(`#${color.hex} read as ${color.color}`);
+      const stage = parseStage(v.stage); if (v.stage && !stage) issues.push(`Unknown status "${v.stage}"`);
+      const key = norm(v.loanNumber), pk = norm(v.borrowerName) + "|" + norm(v.propertyAddress);
+      let dup = existing.find((l) => (key && norm(l.loanNumber) === key) || (v.propertyAddress && norm(l.borrowerName) + "|" + norm(l.propertyAddress) === pk));
+      let dupLabel = dup ? "Existing: " + (dup.borrowerName || dup.loanNumber) : null;
+      if (!dup) { const p = rows.find((x) => (key && norm(x.v.loanNumber) === key) || (v.propertyAddress && norm(x.v.borrowerName) + "|" + norm(x.v.propertyAddress) === pk)); if (p) dupLabel = `${p.sheet} row ${p.row}`; }
+      if (dupLabel) issues.push("Likely duplicate of " + dupLabel);
+      rows.push({ sheet: ws.name, row: r, v, color, stage, issues, dup: dupLabel, include: !dupLabel && !!v.borrowerName, assign: color.ok ? color.processor : "" });
+    }
+  }
+  S.importPreview = { file: file.name, rows, colMap, unmapped: [...unmapped] }; render();
+}
+function importView() {
+  const p = S.importPreview;
+  const out = [pageHead("Import tracker", "Upload the .xlsx workbook. Nothing is saved until you review the preview and choose Import."),
+    h("div", { class: "panel" },
+      h("p", { style: "margin-top:0" }, "Processors are assigned from the Loan Officer cell color: ",
+        ...[["Purple", "#7030A0", "Bobbie"], ["Green", "#00B050", "Adel"], ["Orange", "#FFC000", "Katie"], ["Yellow", "#FFFF00", "Moe"]].map(([c, hx, n]) => h("span", { style: "margin-right:12px;white-space:nowrap" }, h("span", { class: "swatch", style: "background:" + hx }), c + " → " + n))),
+      h("p", { class: "muted" }, "Rows with any other color, or no color, are held for your review. CSV files can't be used because they drop cell colors."),
+      h("input", { id: "imp-file", type: "file", accept: ".xlsx", onchange: (e) => e.target.files[0] && previewFile(e.target.files[0]) }))];
+  if (!p) return out;
+  if (p.loading) return [...out, h("div", { class: "empty" }, "Reading " + p.file + "…")];
+  const inc = p.rows.filter((r) => r.include);
+  const unlinked = [...new Set(inc.map((r) => r.assign).filter((n) => n && !S.mapping[n]))];
+  out.push(h("div", { class: "tiles" }, tile("Rows found", p.rows.length), tile("Assigned by color", p.rows.filter((r) => r.color.ok).length),
+    tile("Need color review", p.rows.filter((r) => !r.color.ok).length, p.rows.some((r) => !r.color.ok)), tile("Likely duplicates", p.rows.filter((r) => r.dup).length), tile("Selected to import", inc.length)));
+  out.push(h("div", { class: "panel" }, h("h2", null, "Column mapping"),
+    h("p", null, Object.entries(p.colMap).map(([f, x]) => h("span", { class: "pill t-teal", style: "margin:0 6px 6px 0" }, `${x} → ${f.replace(/([A-Z])/g, " $1").toLowerCase()}`))),
+    p.unmapped.length ? h("p", { class: "muted" }, "Not imported (no matching field): " + p.unmapped.join(", ") + ". These can be added to Notes later.") : null,
+    !p.colMap.loanOfficer ? h("div", { class: "banner" }, "No Loan Officer column was found in the first 10 rows of any sheet.") : null));
+  if (unlinked.length) out.push(h("div", { class: "banner warn" }, `${unlinked.join(", ")} ${unlinked.length > 1 ? "have" : "has"} no linked account yet. Their rows will go to Unassigned until you link them on the Team page and reassign.`));
+  out.push(h("div", { class: "panel" }, h("div", { class: "scroll" }, h("table", null,
+    h("thead", null, h("tr", null, ["Import", "Row", "Borrower", "Loan #", "Loan officer", "Color", "Processor", "Status", "Closing", "Issues"].map((x) => h("th", null, x)))),
+    h("tbody", null, p.rows.map((r) => h("tr", { class: r.issues.length ? "overdue" : "" },
+      h("td", null, h("input", { type: "checkbox", checked: r.include, "aria-label": "Import row " + r.row, onchange: (e) => { r.include = e.target.checked; render(); } })),
+      h("td", { class: "mono" }, r.sheet + ":" + r.row), h("td", null, r.v.borrowerName || "—"), h("td", { class: "mono" }, r.v.loanNumber || "—"), h("td", null, r.v.loanOfficer || "—"),
+      h("td", null, r.color.hex ? h("span", { class: "swatch", style: "background:#" + r.color.hex }) : null, r.color.ok ? r.color.color : "—"),
+      h("td", null, h("select", { "aria-label": "Processor for row " + r.row, onchange: (e) => { r.assign = e.target.value; render(); } }, h("option", { value: "" }, "Unassigned"), PROCESSORS.map((n) => h("option", { value: n, selected: r.assign === n }, n)))),
+      h("td", null, r.stage ? pill(r.stage) : r.v.stage ? h("span", { class: "pill t-red" }, String(r.v.stage)) : "—"),
+      h("td", { class: "num" }, typeof r.v.closingDate === "string" ? fmtDate(r.v.closingDate) : r.v.closingDate ?? "—"),
+      h("td", { class: "muted", style: "font-size:0.8rem" }, r.issues.join("; "))))))),
+    h("div", { class: "actions", style: "margin-top:12px" }, h("button", { class: "btn primary", disabled: !inc.length, onclick: (e) => runImport(e.currentTarget) }, `Import ${inc.length} row${inc.length === 1 ? "" : "s"}`),
+      h("button", { class: "btn", onclick: () => { S.importPreview = null; render(); } }, "Discard preview"))));
+  return out;
+}
+async function runImport(btn) {
+  const p = S.importPreview; btn.disabled = true; let n = 0;
+  const isDate = (x) => typeof x === "string" && /^\d{4}-\d{2}-\d{2}$/.test(x) ? x : null;
+  for (const r of p.rows.filter((x) => x.include)) {
+    const desk = (r.assign && S.mapping[r.assign]) || "pool", id = uid(), v = r.v;
+    const amount = v.loanAmount != null ? Number(String(v.loanAmount).replace(/[$,]/g, "")) : null;
+    const body = {
+      borrowerName: v.borrowerName ? String(v.borrowerName) : "Unnamed borrower", loanNumber: v.loanNumber != null ? String(v.loanNumber) : null,
+      loanOfficer: v.loanOfficer ? String(v.loanOfficer) : null, propertyAddress: v.propertyAddress ? String(v.propertyAddress) : null, lenderName: v.lenderName ? String(v.lenderName) : null,
+      loanAmount: isFinite(amount) ? amount : null, stage: r.stage || "application", applicationDate: isDate(v.applicationDate), closingDate: isDate(v.closingDate), fundingDate: isDate(v.fundingDate),
+      notes: [v.notes, !isDate(v.closingDate) && v.closingDate ? "Closing (from sheet): " + v.closingDate : null].filter(Boolean).join("\n") || null,
+      milestones: {}, requirements: [], tasks: [], comms: [], createdBy: S.me.id, createdAt: nowIso(), updatedAt: nowIso(),
+      importedFrom: { file: p.file, sheet: r.sheet, row: r.row, color: r.color.hex, colorProcessor: r.color.ok ? r.color.processor : null, assignedTo: r.assign || null },
+      events: [{ type: "imported", source: p.file, from: null, to: r.stage || "application", by: S.me.id, at: nowIso() }],
+    };
+    try { await write(desk === "pool" ? S.db.doc("pool/" + id) : S.db.doc(`desk/${desk}/loans/${id}`), body); n++; } catch { break; }
+  }
+  S.importPreview = null; toast(`Imported ${n} loan${n === 1 ? "" : "s"}`); location.hash = "#loans"; render();
+}
+
+render();
+</script>
